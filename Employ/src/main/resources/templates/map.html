@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        body, html,#allmap {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+        a {
+            text-decoration: none;
+            color: #999999;
+        }
+        form input {
+
+            text-align: center;
+        }
+        .form-control{
+            background-color: aquamarine;
+        }
+
+    </style>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js">
+    </script>
+    <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+    <script type="text/javascript" src="//api.map.baidu.com/api?type=webgl&v=1.0&ak=Pd4cbbGHEvEqdzeSB9G1ckKd24hKGpCx"></script>
+    <title>Location</title>
+</head>
+<body>
+
+<!--<nav class="navbar navbar-inverse">-->
+<!--    <ul class="nav nav-pills">-->
+<!--        <li role="presentation" class="active"><a th:href="@{/employ/welcome}">Home</a></li>-->
+<!--        <li role="presentation"><a th:href="@{/employ/employees}">Employee</a></li>-->
+<!--        <button class="btn-primary m-2" onclick="findPlace()">搜索</button>-->
+<!--    </ul>-->
+<!--</nav>-->
+
+<form onsubmit="return false;" th:object="${location}" style="width: 300px" >
+    <div class="form-group">
+        <label for="locationname">Location:</label>
+        <input type="text" class="form-control" th:field="*{locationname}" id="locationname" >
+    </div>
+    <div class="form-group">
+        <label for="longitude">纬度:</label>
+        <input type="text" class="form-control" th:field="*{longitude}" id="longitude" >
+    </div>
+    <div class="form-group">
+        <label for="latitude">经度:</label>
+        <input type="text" class="form-control" th:field="*{latitude}" id="latitude" >
+    </div>
+
+</form>
+
+<!--<form class="form-inline"  onsubmit="return false;" th:object="${location}">-->
+
+<!--    <div class="form-group">-->
+<!--        <label for="locationname">Location:</label>-->
+<!--        <input type="text" class="form-control" th:field="*{locationname}" id="locationname" >-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label for="longitude">纬度:</label>-->
+<!--        <input type="text" class="form-control" th:field="*{longitude}" id="longitude" >-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label for="latitude">经度:</label>-->
+<!--        <input type="text" class="form-control" th:field="*{latitude}" id="latitude" >-->
+<!--    </div>-->
+<!--</form>-->
+<hr style="width: 300px">
+<form  onsubmit="return false;" th:object="${employee1}" style="width: 300px">
+
+    <div class="form-group">
+        <label for="employeename">Name:</label>
+        <input type="text" class="form-control" th:field="*{employeename}" id="employeename" >
+    </div>
+    <div class="form-group">
+        <label for="employeename">Gender:</label>
+        <input type="text" class="form-control" th:field="*{gender}" id="gender" >
+    </div>
+    <div class="form-group">
+        <label for="employeename">Age:</label>
+        <input type="text" class="form-control" th:field="*{age}" id="age" >
+    </div>
+    <div class="form-group">
+        <label for="employeename">Basesalary:</label>
+        <input type="text" class="form-control" th:field="*{basesalary}" id="basesalary" >
+    </div>
+    <div class="form-group">
+        <label for="subsidy">差旅补助:</label>
+        <input type="text" class="form-control"  id="subsidy" >
+
+    </div>
+    <div class="form-group">
+        <label for="allsalary">总工资:</label>
+        <input type="text" class="form-control"  id="allsalary" >
+    </div>
+    <button type="button" style="border: 2px solid black" onclick="cancelForm()" class="btn btn-default">Cancel</button>
+
+</form>
+<div id="allmap" style="position: absolute;top: 5px;left: 350px"></div>
+</body>
+</html>
+<script type="text/javascript">
+    //
+    const locationname = document.getElementById('locationname').value
+    const lat = document.getElementById('longitude').value
+    const lon = document.getElementById('latitude').value
+    const name = document.getElementById('employeename').value
+    const age = document.getElementById('age').value
+    const gender = document.getElementById('gender').value
+    const basesalary = document.getElementById('basesalary').value
+    const subSidy=document.getElementById('subsidy')
+    const allSalary=document.getElementById('allsalary')
+    //
+    let place1
+    (async()=>{
+        const res = await fetch(`http://localhost:8080/api/findPlace/${locationname}/乐山`)
+        place1 = await res.json()
+        console.log(place1)
+        var map = new BMapGL.Map("allmap");
+        var point = new BMapGL.Point(place1.longitude,place1.latitude);
+        //距离
+        const res1 = await fetch(`http://localhost:8080/api/distance/${lat}/${lon}`)
+        place2 = await res1.json()
+        console.log(place2)
+        place2>20000? subSidy.value="有":subSidy.value= "无";
+        place2>20000? allSalary.value=Number(basesalary)+Number(500):allSalary.value= basesalary;
+
+
+
+        map.centerAndZoom(point, 15);
+        var scaleCtrl = new BMapGL.ScaleControl();  // 添加比例尺控件
+        map.addControl(scaleCtrl);
+        var zoomCtrl = new BMapGL.ZoomControl();  // 添加缩放控件
+        map.addControl(zoomCtrl);
+        var cityCtrl = new BMapGL.CityListControl();  // 添加城市列表控件
+        map.addControl(cityCtrl);
+        map.enableScrollWheelZoom(true);//鼠标缩放
+        var marker = new BMapGL.Marker(point);  // 创建标注
+        map.addOverlay(marker);              // 将标注添加到地图中
+        var opts = {
+            width : 200,     // 信息窗口宽度
+            height: 100,     // 信息窗口高度
+            title : locationname , // 信息窗口标题
+
+
+        }
+        var infoWindow = new BMapGL.InfoWindow("姓名:"+name+
+            "||性别:"+gender+
+            "||年龄:"+age+
+            "||基础工资:"+basesalary,opts);  // 创建信息窗口对象
+        marker.addEventListener("click", function(){
+            map.openInfoWindow(infoWindow, point); //开启信息窗口
+        });
+    })()
+
+
+        function cancelForm(){
+            window.location="[[@{/employ/employees}]]"
+        }
+
+
+</script>
